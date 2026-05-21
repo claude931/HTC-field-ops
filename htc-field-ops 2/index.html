@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f2419">
+<title>HTC Field Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="screen-login" class="screen active">
+  <div class="login-bg"></div>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-mark">HTC</div>
+      <div class="logo-name">Hilltop Craftsmen</div>
+      <div class="logo-sub">Field Operations</div>
+    </div>
+    <div class="login-card">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="login-email" class="form-input" placeholder="you@hilltopcraftsmen.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="error-msg" id="login-error"></div>
+      <button class="btn-primary" id="login-btn" onclick="App.login()">Sign in</button>
+      <div class="login-or"><span>or</span></div>
+      <button class="btn-secondary" onclick="App.showScreen('kiosk')">
+        <i class="ti ti-users"></i> Open kiosk mode
+      </button>
+    </div>
+    <div class="login-footer">Hilltop Craftsmen · Sandpoint, ID</div>
+  </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="screen-app" class="screen">
+  <!-- Header -->
+  <header class="app-header" id="app-header">
+    <div class="header-left">
+      <div class="header-logo">HTC</div>
+      <div class="header-context" id="header-context">
+        <div class="header-name" id="header-name">Loading...</div>
+        <div class="header-role" id="header-role"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="sync-dot" title="Synced"></div>
+      <button class="avatar-btn" id="header-avatar" onclick="App.toggleUserMenu()">SH</button>
+    </div>
+  </header>
+
+  <!-- User menu dropdown -->
+  <div class="user-menu" id="user-menu" style="display:none">
+    <div class="user-menu-item" onclick="App.showScreen('settings')"><i class="ti ti-settings"></i> Settings</div>
+    <div class="user-menu-item" id="um-admin" onclick="App.gotoTab('admin')" style="display:none"><i class="ti ti-layout-dashboard"></i> Admin dashboard</div>
+    <div class="user-menu-divider"></div>
+    <div class="user-menu-item danger" onclick="App.logout()"><i class="ti ti-logout"></i> Sign out</div>
+  </div>
+
+  <!-- Main content area -->
+  <main class="app-main" id="app-main">
+
+    <!-- ===== TOOLS TAB ===== -->
+    <div class="tab-content active" id="tab-tools">
+      <div class="tab-header">
+        <h2 class="tab-title">Tool management</h2>
+        <button class="icon-btn" onclick="App.tools.openAddTool()" id="tools-add-btn" style="display:none" aria-label="Add tool"><i class="ti ti-plus"></i></button>
+      </div>
+
+      <div class="stat-row" id="tools-stats">
+        <div class="stat-card"><div class="stat-n" id="stat-total">—</div><div class="stat-l">Total owned</div></div>
+        <div class="stat-card"><div class="stat-n" id="stat-deployed">—</div><div class="stat-l">Deployed</div></div>
+        <div class="stat-card"><div class="stat-n danger" id="stat-shortage">—</div><div class="stat-l">Shortages</div></div>
+        <div class="stat-card"><div class="stat-n" id="stat-sites">—</div><div class="stat-l">Active sites</div></div>
+      </div>
+
+      <div class="section-label">My site</div>
+      <div class="site-selector">
+        <select class="form-select" id="my-site-select" onchange="App.tools.loadSiteTools()">
+          <option value="">Select your site...</option>
+        </select>
+      </div>
+
+      <div id="site-tools-list" class="tool-list"></div>
+
+      <div class="section-label" style="margin-top:20px">All sites</div>
+      <div id="all-sites-list" class="sites-grid"></div>
+    </div>
+
+    <!-- ===== TIME TAB ===== -->
+    <div class="tab-content" id="tab-time">
+      <div class="tab-header">
+        <h2 class="tab-title">My time</h2>
+      </div>
+
+      <div class="clock-card" id="clock-card">
+        <div class="clock-time" id="clock-display">8:00 AM</div>
+        <div class="clock-date" id="clock-date-display"></div>
+        <div class="clock-status-row">
+          <div class="clock-status" id="clock-status-text">Not clocked in</div>
+          <div class="clock-duration" id="clock-duration"></div>
+        </div>
+        <div class="clock-job" id="clock-job-name"></div>
+      </div>
+
+      <div id="clockin-section">
+        <select class="form-select" id="clockin-job-select" style="margin-bottom:10px">
+          <option value="">Select job site...</option>
+        </select>
+        <button class="btn-primary btn-clockin" id="clockin-btn" onclick="App.time.clockIn()">
+          <i class="ti ti-player-play"></i> Clock in
+        </button>
+      </div>
+
+      <div id="clockout-section" style="display:none">
+        <button class="btn-clockout" onclick="App.time.promptClockOut()">
+          <i class="ti ti-player-stop"></i> Clock out
+        </button>
+        <div class="geo-line" id="geo-active"><i class="ti ti-map-pin"></i> Location tracking active</div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px">This week</div>
+      <div class="week-total-bar">
+        <span class="week-label">Week total</span>
+        <span class="week-hours" id="week-total-display">0.0 hrs</span>
+      </div>
+      <div class="entries-list" id="week-entries-list">
+        <div class="empty-state"><i class="ti ti-clock"></i><p>No entries this week yet</p></div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN TAB ===== -->
+    <div class="tab-content" id="tab-admin">
+      <div class="tab-header">
+        <h2 class="tab-title">Admin</h2>
+        <div class="tab-chips">
+          <button class="chip active" onclick="App.admin.switchView('timecards',this)">Timecards</button>
+          <button class="chip" onclick="App.admin.switchView('tools',this)">Tools</button>
+          <button class="chip" onclick="App.admin.switchView('jobs',this)">Jobs</button>
+          <button class="chip" onclick="App.admin.switchView('team',this)">Team</button>
+        </div>
+      </div>
+
+      <div id="admin-timecards">
+        <div class="week-nav">
+          <button class="icon-btn" onclick="App.admin.shiftWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+          <span class="week-range-label" id="admin-week-label">Week of —</span>
+          <button class="icon-btn" onclick="App.admin.shiftWeek(1)"><i class="ti ti-chevron-right"></i></button>
+          <button class="btn-sm" onclick="App.admin.exportTimecards()"><i class="ti ti-download"></i> Export</button>
+        </div>
+        <div id="admin-tc-list" class="emp-list"></div>
+      </div>
+
+      <div id="admin-tools-view" style="display:none">
+        <div class="search-bar">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search tools..." id="tools-search" oninput="App.admin.searchTools()" class="search-input">
+        </div>
+        <div id="admin-tools-list" class="tool-list"></div>
+        <button class="btn-primary" style="margin-top:12px" onclick="App.tools.openAddTool()"><i class="ti ti-plus"></i> Add tool</button>
+      </div>
+
+      <div id="admin-jobs-view" style="display:none">
+        <div id="admin-jobs-list" class="jobs-list"></div>
+        <button class="btn-primary" style="margin-top:12px" onclick="App.admin.openAddJob()"><i class="ti ti-plus"></i> New job</button>
+      </div>
+
+      <div id="admin-team-view" style="display:none">
+        <div id="admin-team-list" class="emp-list"></div>
+        <button class="btn-primary" style="margin-top:12px" onclick="App.admin.openAddEmployee()"><i class="ti ti-user-plus"></i> Add employee</button>
+      </div>
+    </div>
+
+    <!-- ===== KIOSK TAB ===== -->
+    <div class="tab-content" id="tab-kiosk">
+      <div id="kiosk-select-screen">
+        <div class="kiosk-header">
+          <div class="kiosk-title">Who are you?</div>
+          <div class="kiosk-sub">Tap your name to continue</div>
+        </div>
+        <div class="emp-grid" id="kiosk-emp-grid"></div>
+      </div>
+
+      <div id="kiosk-pin-screen" style="display:none">
+        <button class="back-btn" onclick="App.kiosk.back()"><i class="ti ti-arrow-left"></i> Back</button>
+        <div class="pin-header">
+          <div class="pin-avatar" id="pin-avatar">SH</div>
+          <div class="pin-name" id="pin-name">Seth Hill</div>
+          <div class="pin-prompt">Enter your 4-digit PIN</div>
+        </div>
+        <div class="pin-display" id="pin-display">
+          <span class="pin-dot" id="pd0"></span>
+          <span class="pin-dot" id="pd1"></span>
+          <span class="pin-dot" id="pd2"></span>
+          <span class="pin-dot" id="pd3"></span>
+        </div>
+        <div class="pin-error" id="pin-error"></div>
+        <div class="pin-grid">
+          <button class="pin-key" onclick="App.kiosk.pinPress('1')">1</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('2')">2</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('3')">3</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('4')">4</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('5')">5</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('6')">6</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('7')">7</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('8')">8</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('9')">9</button>
+          <button class="pin-key pin-clear" onclick="App.kiosk.pinClear()">Clear</button>
+          <button class="pin-key" onclick="App.kiosk.pinPress('0')">0</button>
+          <button class="pin-key pin-del" onclick="App.kiosk.pinDel()"><i class="ti ti-backspace"></i></button>
+        </div>
+      </div>
+
+      <div id="kiosk-clocked-screen" style="display:none">
+        <div class="clock-card in" id="kiosk-clock-card">
+          <div class="clock-time" id="kiosk-clock-display">—</div>
+          <div class="clock-date" id="kiosk-clock-date">—</div>
+          <div class="clock-status-row">
+            <div class="clock-status">Clocked in</div>
+            <div class="clock-duration" id="kiosk-duration"></div>
+          </div>
+          <div class="clock-job" id="kiosk-job-name"></div>
+        </div>
+        <div class="geo-line"><i class="ti ti-map-pin"></i> Geo-tagged · location tracking active</div>
+        <button class="btn-clockout" style="margin-top:14px" onclick="App.kiosk.promptClockOut()">
+          <i class="ti ti-player-stop"></i> Clock out
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-btn active" data-tab="tools" onclick="App.gotoTab('tools')">
+      <i class="ti ti-tool"></i><span>Tools</span>
+    </button>
+    <button class="nav-btn" data-tab="time" onclick="App.gotoTab('time')">
+      <i class="ti ti-clock"></i><span>Time</span>
+    </button>
+    <button class="nav-btn admin-only" data-tab="admin" onclick="App.gotoTab('admin')" style="display:none">
+      <i class="ti ti-layout-dashboard"></i><span>Admin</span>
+    </button>
+    <button class="nav-btn" data-tab="kiosk" onclick="App.gotoTab('kiosk')">
+      <i class="ti ti-users"></i><span>Kiosk</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Clock out modal -->
+<div class="modal-overlay" id="modal-clockout">
+  <div class="modal">
+    <div class="modal-title">Clock out</div>
+    <div class="modal-sub" id="clockout-modal-sub">Summarize what you worked on today</div>
+    <textarea class="form-textarea" id="clockout-desc" placeholder="e.g. Framed drop lids on 3rd floor, ran air lines to compressor..."></textarea>
+    <div class="geo-line"><i class="ti ti-map-pin"></i> Geo-tag will be recorded at clock-out</div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="App.time.confirmClockOut()"><i class="ti ti-check"></i> Submit & clock out</button>
+      <button class="btn-ghost" onclick="App.closeModal('modal-clockout')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transfer modal -->
+<div class="modal-overlay" id="modal-transfer">
+  <div class="modal">
+    <div class="modal-title">Transfer tool</div>
+    <div class="modal-sub" id="transfer-tool-label"></div>
+    <div class="form-group">
+      <label class="form-label">From</label>
+      <select class="form-select" id="transfer-from"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">To</label>
+      <select class="form-select" id="transfer-to"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Qty</label>
+        <input type="number" class="form-input" id="transfer-qty" min="1" value="1">
+      </div>
+      <div class="form-group" style="flex:2">
+        <label class="form-label">Condition</label>
+        <select class="form-select" id="transfer-condition">
+          <option value="excellent">Excellent</option>
+          <option value="good" selected>Good</option>
+          <option value="fair">Fair</option>
+          <option value="needs_repair">Needs repair</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <input type="text" class="form-input" id="transfer-notes" placeholder="Any notes...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="App.tools.confirmTransfer()"><i class="ti ti-check"></i> Confirm transfer</button>
+      <button class="btn-ghost" onclick="App.closeModal('modal-transfer')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Timecard detail modal -->
+<div class="modal-overlay" id="modal-timecard">
+  <div class="modal modal-lg">
+    <div class="modal-title" id="tc-modal-title">Timecard</div>
+    <div class="modal-sub" id="tc-modal-sub"></div>
+    <div id="tc-entries-list" class="entries-list" style="max-height:340px;overflow-y:auto"></div>
+    <div class="tc-total-row"><span>Total</span><span id="tc-modal-total">0.0 hrs</span></div>
+    <div class="modal-actions" id="tc-modal-actions">
+      <button class="btn-primary" id="tc-approve-btn" onclick="App.admin.approveTimecard()"><i class="ti ti-check"></i> Approve</button>
+      <button class="btn-sm" onclick="App.admin.editTimeEntry()"><i class="ti ti-edit"></i> Edit entry</button>
+      <button class="btn-ghost" onclick="App.closeModal('modal-timecard')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit tool modal -->
+<div class="modal-overlay" id="modal-tool">
+  <div class="modal">
+    <div class="modal-title" id="tool-modal-title">Add tool</div>
+    <input type="hidden" id="tool-edit-id">
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="tool-category"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tool name</label>
+      <input type="text" class="form-input" id="tool-name" placeholder="e.g. Rotohammer">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Size / type</label>
+      <input type="text" class="form-input" id="tool-size" placeholder="e.g. SDS-Max">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Total owned</label>
+        <input type="number" class="form-input" id="tool-qty" min="0" value="1">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Min shop stock</label>
+        <input type="number" class="form-input" id="tool-min" min="0" value="0">
+      </div>
+    </div>
+    <div class="form-group checkbox-group">
+      <input type="checkbox" id="tool-consumable">
+      <label for="tool-consumable">Consumable (nails, screws, etc.)</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="App.tools.saveTool()"><i class="ti ti-check"></i> Save tool</button>
+      <button class="btn-ghost" onclick="App.closeModal('modal-tool')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add job modal -->
+<div class="modal-overlay" id="modal-job">
+  <div class="modal">
+    <div class="modal-title">New job</div>
+    <div class="form-group">
+      <label class="form-label">Job number</label>
+      <input type="text" class="form-input" id="job-number" placeholder="e.g. 501">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Job name</label>
+      <input type="text" class="form-input" id="job-name-input" placeholder="e.g. Smith Residence">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Address</label>
+      <input type="text" class="form-input" id="job-address" placeholder="Street address">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:2">
+        <label class="form-label">City</label>
+        <input type="text" class="form-input" id="job-city" placeholder="Sandpoint" value="Sandpoint">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="job-status-sel">
+          <option value="active">Active</option>
+          <option value="awarded">Awarded</option>
+          <option value="bidding">Bidding</option>
+          <option value="punch_list">Punch list</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="App.admin.saveJob()"><i class="ti ti-check"></i> Create job</button>
+      <button class="btn-ghost" onclick="App.closeModal('modal-job')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast-container"></div>
+
+<!-- Offline banner -->
+<div class="offline-banner" id="offline-banner" style="display:none">
+  <i class="ti ti-wifi-off"></i> Offline — changes will sync when reconnected
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
